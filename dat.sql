@@ -85,10 +85,3 @@ $acquisition_date_constraint$ LANGUAGE plpgsql;
 -- Run the trigger whenever a row is inserted or upated to acquisitions
 CREATE TRIGGER acquisition_date_constraint BEFORE INSERT OR UPDATE ON acquistion
     FOR EACH ROW EXECUTE PROCEDURE acquisition_date_constraint();
-
-
-
-
-
-
-
