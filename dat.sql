@@ -41,7 +41,8 @@ CREATE TABLE country (
 
 CREATE TABLE founder (
     id serial,
-    name varchar (255) not null,
+    firstname varchar (255) not null,
+    lastname varchar (255) not null,
     dob date not null,
     country_of_origin ISO3166_ALPHA2 not null,
     PRIMARY KEY (id),

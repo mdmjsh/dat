@@ -19,8 +19,8 @@ VALUES ('Jupiter',
         'CN');
 
  Founders
-INSERT INTO founder(name, dob, country_of_origin)
-VALUES ('Elon Musk',
+INSERT INTO founder(firstname, lastname, dob, country_of_origin)
+VALUES ('Elon', 'Musk',
         '1971-28-06',
         'SA') -- Companies
 
