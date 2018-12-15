@@ -1,4 +1,6 @@
 \documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+
 \title{Database Design}
 \author{Joshua Harrison}
 \date{\today}
@@ -10,7 +12,7 @@
 
 \subsection{Relationl schema design}
 This section will discuss some of the notworthy descisions taken in the design of the relational schema for the given problem domain.
-The full SQL for the relational schema can be seen in \emph{appendix 1.1}. Note: \emph{PostgreSQL 9.6} is used for all DML and DDL defined in this document.
+The full SQL for the relational schema can be seen in \emph{appendix 1.1}. Note: \emph{PostgreSQL 9.6} is used for all DML and DDL defined in this document. The online SQL compiler https://rextester.com was used to validate the schema and its constraints.
 
 \subsubsection{Types}
 The schema defines two custom enums types  `ISO3166\_ALPHA2' (based on the ISO3166 standard), and `AQUISITION\_STATUS'. It is worth noting that `ISO3166\_ALPHA2' is loaded with a subset of the country code that are actually contained in the full standard as this is fit for the purpose of our data model.
@@ -26,7 +28,37 @@ For the given problem the following schema has been defined.
 
 \begin{tabular}{l|c|l}
 Name&PK&Description\\\hline
-Company&ID&A store for all companies\\
+Company&ID&A store for all companes\\
 \end{tabular}
+
+\subsection{Normalisation}
+Is this design in BCNF? Before we give an answer to this, let us first list out non-trivial functional dependencies for the schema.
+
+\subsection{Functional Dependencies}
+\subsubsection{Company}
+
+id \Rightarrow{\{name, founded, country\_code, parent\_company\_id\}} \\
+name \Rightarrow{founder} \\
+name \Rightarrow{parent\_code\_id} \\
+name \not \Rightarrow{country\_code} \textsuperscript{*} \\
+
+\\ \textsuperscript{*} N.b This pair is not a functional dependency due to the unique constraint that is inplace between these two columns. Had this additional constraint not been implamented then a functional dependency could be possible here.
+
+\subsubsection{Founder}
+name \Rightarrow{dob} \\
+name \Rightarrow{country\_of\_origin}
+
+\subsubsection{Acquisition}
+\{parent\_company\_id, child\_company\_id\} \Rightarrow{\{announced\_date, completion\_date}\} \\
+ \{parent\_company\_id, child\_company\_id\} \not \Rightarrow status \textsuperscript{*} \\
+
+\textsuperscript{*} \\ N.b. Depending on the implemention of the data model, this functional dependency may or may not be present. For example, given a scenario in which \emph{company A} makes a failed attempt to acquire \emph{company B}, there are two potenial ways to record this data. 1) To create a new row for the second attempted acquisition (i.e. a record exists for both the failed and successful acquisition), or 2) the original record is updated (i.e only one record exists which is updated). The first implemention has a practical advantages in that it enables us to keep a historised account of all acquisition attempts between any companies. In this implemenation this functional dependency does not exist (as expressed above). Conversely, the second \textit{non-historised} implemenation only stores half the story - specify, which ever acquisition was announced most recently.
+
+\begin{tabular}{l|c|l|r}
+parent company&chid company&status&date\\\hline
+Company A&Company B&Failed\\b\\
+Company A&Company B&Failed\\y\\
+\end{tabular}
+
 
 \end{document}
