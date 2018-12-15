@@ -1,0 +1,32 @@
+\documentclass[12pt]{article}
+\title{Database Design}
+\author{Joshua Harrison}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Relational Design}
+
+\subsection{Relationl schema design}
+This section will discuss some of the notworthy descisions taken in the design of the relational schema for the given problem domain.
+The full SQL for the relational schema can be seen in \emph{appendix 1.1}. Note: \emph{PostgreSQL 9.6} is used for all DML and DDL defined in this document.
+
+\subsubsection{Types}
+The schema defines two custom enums types  `ISO3166\_ALPHA2' (based on the ISO3166 standard), and `AQUISITION\_STATUS'. It is worth noting that `ISO3166\_ALPHA2' is loaded with a subset of the country code that are actually contained in the full standard as this is fit for the purpose of our data model.
+
+The AQUISITION\_STATUS status enum is implement by the \emph{status} column in the \emp{acquisition} table, and the ISO3166\_ALPHA2 enum is implemented by diretly by the \emp{country} table as well as all tables which contain a foriegn key to this table (\emph{company}, \emph{founder}).
+
+This use of Enums is advantegous as it provides a means of implict santisation to the tables that implement these types. For example it means an \emph{acquisition} instance could never be created with an status of undeseriable status (i.e a status outside the domain of strings defined by the enum). The same is true of the ISO3166\_ALPHA2 implemention, through it we can be assured the quality of the country code in the database is acurate. Considering Date's  oberservation [REF - Date] that a table can be thought of as a predicate for which each row is a true proposition, custom data types enable use to constrain the domain of the predicate to only relevant values. For example, the ISO3166\_ALPHA2 implemented in this model it would be impossible to enter a country with the values `Norway', `NO'.
+
+It should be noted that the `Norway', `CN' would be a valid entry into the country table. We can verify that this record is false as per the ISO3166 standard [REF ISO3166], however there is nothing wrong with it from the data storage level. Therefore although implementing the custom type has help with intrity, it has not gaurenteed the quality of the data, or put another way it is possible for our schema to record false propositions. A further improvement would therfore be to drop the country table altogether extend the custom enum to include the country name and code.
+
+\subsubsection{Relational Schema Design}
+For the given problem the following schema has been defined.
+
+\begin{tabular}{l|c|l}
+Name&PK&Description\\\hline
+Company&ID&A store for all companies\\
+\end{tabular}
+
+\end{document}

@@ -15,18 +15,12 @@ CREATE TYPE AQUISITION_STATUS AS ENUM (
     'failed'
 );
 
-CREATE TYPE AQUISITION_STATUS AS ENUM (
-    'announced'
-    'completed',
-    'failed'
-);
-
 DROP TABLE IF EXISTS company;
 CREATE TABLE company (
     id serial,
     name varchar (255)  not null,
     founded date not null,
-    country_code char (2) not null,
+    country_code ISO3166_ALPHA2 not null,
     parent_company_id int default null, -- need to make this an int not a serial to allow nulls
 
     -- Constraints
