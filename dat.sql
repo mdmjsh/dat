@@ -87,7 +87,7 @@ CREATE TABLE acquistion (
 CREATE FUNCTION acquisition_date_constraint() RETURNS trigger AS $acquisition_date_constraint$
     BEGIN
         IF NEW.announced_date < (SELECT founded FROM company WHERE id = NEW.child_company_id) THEN
-            RAISE EXCEPTION '% cannot have null salary', NEW.announced_date;
+            RAISE EXCEPTION '% Acquistion cannot be announced before company founded!', NEW.announced_date;
         END IF;
 
         RETURN NEW;
