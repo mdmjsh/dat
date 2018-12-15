@@ -4,8 +4,15 @@ CREATE TYPE ISO3166_ALPHA2 AS ENUM (
     'DE',
     'FR',
     'GB',
-    'SS',
-    'US'
+    'US',
+    'JP',
+    'CN'
+);
+
+CREATE TYPE AQUISITION_STATUS AS ENUM (
+    'announced'
+    'completed',
+    'failed'
 );
 
 CREATE TYPE AQUISITION_STATUS AS ENUM (
@@ -20,15 +27,17 @@ CREATE TABLE company (
     name varchar (255)  not null,
     founded date not null,
     country_code char (2) not null,
-    parent_company_id serial,
+    parent_company_id int default null, -- need to make this an int not a serial to allow nulls
 
     -- Constraints
-    CONSTRAINT company_name_country UNIQUE (name, country_code),
     PRIMARY KEY (id),
+    CONSTRAINT company_name_country UNIQUE (name, country_code),
     FOREIGN KEY (country_code) REFERENCES country (code),
+    FOREIGN KEY (parent_company_id) REFERENCES company (id),
     CONSTRAINT not_own_parent CHECK (id != parent_company_id)
 );
 
+-- Not NF violation as the PK is the code.
 DROP TABLE IF EXISTS country CASCADE;
 CREATE TABLE country (
     name varchar (255)  not null,
@@ -43,6 +52,13 @@ CREATE TABLE founder (
     country_of_origin ISO3166_ALPHA2 not null,
     PRIMARY KEY (id),
     FOREIGN KEY (country_of_origin) REFERENCES country (code)
+);
+
+CREATE TABLE founder_companies(
+    founder_id serial,
+    company_id serial,
+    FOREIGN KEY (founder_id) REFERENCES founder (id),
+    FOREIGN KEY (company_id) REFERENCES company (id)
 );
 
 CREATE TABLE acquistion (
@@ -70,7 +86,6 @@ CREATE TABLE acquistion (
     OR (completion_date IS NULL AND (status <> 'failed')))
 
 );
-
 
 CREATE FUNCTION acquisition_date_constraint() RETURNS trigger AS $acquisition_date_constraint$
     BEGIN
