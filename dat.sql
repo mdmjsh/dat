@@ -62,10 +62,8 @@ CREATE TABLE founder_companies(
 );
 
 CREATE TABLE acquistion (
-    parent_company_id serial not null,
-    child_company_id serial not null,
-    -- An acquisition has to be announced for it to be in this table
-    -- hence default value
+    parent_company_id int not null,
+    child_company_id int not null,
     status AQUISITION_STATUS,
     price_usd NUMERIC default null,
     announced_date DATE not null,
@@ -82,9 +80,8 @@ CREATE TABLE acquistion (
 
     -- No completion date for failed acquisitions
     CONSTRAINT check_no_failed_completion_dates CHECK (
-        completion_date IS NOT NULL
-    OR (completion_date IS NULL AND (status <> 'failed')))
-
+        status <> 'failed'
+        or status = 'failed' AND (completion_date IS NULL)))
 );
 
 CREATE FUNCTION acquisition_date_constraint() RETURNS trigger AS $acquisition_date_constraint$
