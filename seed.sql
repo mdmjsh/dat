@@ -22,7 +22,10 @@ VALUES ('Jupiter',
 INSERT INTO founder(firstname, lastname, dob, country_of_origin)
 VALUES ('Elon', 'Musk',
         '1971-06-28',
-        'SA')
+        'SA'),
+VALUES ('Bobby', 'George',
+        '1971-06-28',
+        'UK');
 
 -- Companies
 INSERT INTO company(name, founded, country_code, parent_company_id)
@@ -58,26 +61,37 @@ VALUES (1,1);
 
  -- Acquisitions
 
-INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date)
+INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date, completion_date)
 VALUES(1,
        2,
        'completed',
+       '2017-11-06',
        '2017-11-06'),
-VALUES(1,
+(1,
        3,
        'completed',
-       '2016-06-22'),
-VALUES(1,
+       '2016-06-22',
+       '2017-11-06'),
+(1,
        4,
        'completed',
-       '2016-11-08'),
-VALUES(1,
+       '2016-11-08',
+       '2017-11-06'),
+(1,
        5,
        'completed',
-       '2015-06-08');
+       '2015-06-08',
+       '2017-11-06');
+
+-- Test data for query e
+INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date, failed_date)
+VALUES(1,
+       5,
+       'failed',
+       '2015-06-07',
+       '2015-06-07');
 
  -- Fails - no_self_acquisitions
-
 INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date)
 VALUES(1,
        1,
@@ -104,3 +118,24 @@ VALUES(2,
        '2006-12-31');
 
  -- << P0001: 2006-12-31 Acquistion cannot be announced before company founded!
+
+
+ -- Data for f
+ INSERT INTO founder_companies(founder_id, company_id)
+VALUES (2,2);
+
+
+-- Data for g - Georgie should be returned, but not Joey
+INSERT INTO company(name, founded, country_code, parent_company_id)
+VALUES ('Joey',
+        '2003-01-01',
+        'US',
+        NULL),
+('Georgie',
+        '2003-01-01',
+        'US',
+        2),
+('Petey',
+        '2003-01-01',
+        'US',
+        7);

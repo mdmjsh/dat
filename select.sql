@@ -21,19 +21,53 @@ where parent.name = 'Tesla';
 
 ----- question 3
 
+a) select id from company where founded > '1999-12-31';
 
-a) select * from company where founded > 1999-12-31;
+b) select id from company where country_code IN ('UK', 'US');
 
-b) select * from company where country_code IN ('UK', 'US');
+c) select distinct(parent_company_id) from acquistion where status = 'completed';
 
-c) select distinct(a.parent_company_id) from (select * from acquisition where status == 'completed')a;
+d) SELECT
+ founder_id,
+ COUNT (founder_id)
+FROM
+ founder_companies
+GROUP BY
+ founder_id
+HAVING
+ COUNT (founder_id) >= 3;
 
-d) select a.founder_id from (select count(founder_id) from founder_companies)a where count >=3;
 
-e) select a.child_company_id from (select * from acquisition where status == 'failed')a join (select * from acquisition where status == 'completed')b where a.failed_date < b.complete_date;
+e) select f.child_company_id from
+ (select * from acquistion where status = 'failed')f
+ join (select * from acquistion where status = 'completed')c on c.child_company_id = f.child_company_id
+ where c.completion_date > f.failed_date;
 
-f) select a.founder_id from (select count(*) as cn from founder_companies group by founder_id order by cn desc)a limit 10;
+f) select founder_id, count(founder_id) from founder_companies
+ group by founder_id
+ order by count(founder_id) desc limit 10;
 
 g)
 
+WITH RECURSIVE comp AS (
+ SELECT
+ parent_company_id,
+ id,
+ name
+ FROM
+ company
+ WHERE
+ name = 'Tesla'
+ UNION
+ SELECT
+ c.parent_company_id,
+ c.id,
+ c.name
+ FROM
+ company c
+ INNER JOIN comp p ON p.id = c.parent_company_id
+) SELECT
+ comp.name
+FROM
+ comp;
 
