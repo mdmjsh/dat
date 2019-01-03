@@ -11,8 +11,8 @@
 \section{Relational Design}
 
 \subsection{Relationl schema design}
-This section will discuss some of the notworthy descisions taken in the design of the relational schema for the given problem domain.
-The full SQL for the relational schema can be seen in \emph{appendix 1.1}. Note: \emph{PostgreSQL 9.6} is used for all DML and DDL defined in this document. The online SQL compiler https://rextester.com was used to validate the schema and its constraints.
+This section will discuss some of the noteworthy descisions taken in the design of the relational schema for the given problem domain.
+The full SQL for the relational schema can be seen in \emph{appendix 1.1}. Note: PostgreSQL 9.6 is used for all DML and DDL defined in this document. The online SQL compiler https://rextester.com was used to validate the schema and its constraints.
 
 \subsubsection{Types}
 The schema defines two custom enum types, namely  `ISO3166\_ALPHA2' (based on the ISO3166 standard), and `AQUISITION\_STATUS'. It is worth noting that `ISO3166\_ALPHA2' is loaded with a subset of the full standard as this is fit for the purpose of our data model.
@@ -24,7 +24,7 @@ The use of Enums is advantegous as it provides a means of implict santisation to
 It should be noted that the tuple (`Norway', `CN') would be a valid entry into the country table. We can verify that this record is false as per the ISO3166 standard [REF ISO3166], however there is nothing wrong with it from the data storage level. Therefore although implementing the custom type has helped with integrity, it has not guarenteed the quality of the data. To frame ths in the context of propositional logic as prescribed by Date; is possible for our schema to record false propositions. Dropping the country table altogether and extending the SO3166\_ALPHA2 type to include a country name and code tuple would therefore be an improvement that could be made to this model if we wanted to introduce more rigour and reduce the potential such inaccurracies.
 
 \subsubsection{Relational Schema Design}
-For the given problem the following schema has been defined.
+For the given problem the following schema has been defined. \\
 
 \begin{tabular}{l|c|l}
 Name&PK&Description\\\hline
@@ -32,31 +32,31 @@ Company&ID&A store for all companes\\
 \end{tabular}
 
 \subsection{Normalisation}
-A relational schema can be said to be compliant to BCNF if for all of its functional dependencies (x $\Rightarrow$ y) one of the following statements is true: \\
-1) y is a subset of x (trival functional dependency)
+A relational schema can be said to be compliant to BCNF if for all of its functional dependencies (x $\Rightarrow$ y) if one of the following statements is true: \\\\
+1) y is a subset of x (trival functional dependency) \\
 2) x is a superkey (A subset of a candidate key for the relation). \\
 Given this defintion and with the non-trivial functional dependcies highlighted below, we can judge that this schema is compliant to BCNF.
 
 \subsubsection{Company}
 
-id \Rightarrow{\{name, founded, country\_code, parent\_company\_id\}} \\
-\{{name, country\_code\}} $\Rightarrow\${{founded, parent\_company\_id, id\}} \\
+id $\Rightarrow${\{name, founded, country\_code, parent\_company\_id\}} \\
+\{{name, country\_code\}} $\Rightarrow$ {\{founded, parent\_company\_id, id\}} \\
 
 \\ N.B. name and founded seems like a potential functional dependency, but note that in this schema name and country code form a composite unique constraint. That is to say that multiple companies with the same name can exist in the reltaion, provided they are in different countries. Hence functional dependencies with the \{{name, countrycode\}} tuple on the left side do hold, but those with \{{name, founded\}} do not.
 
-The \{{name, founded\}} is candidate key. Had this been implemented as a composite primary key there would have been no requirement for the additional `id' attribute, however as this key is used in multiple places as a foreign key to other tables (including the self reference in this table), it is more efficient to use an id field than a composite of two string column. x is a candidate key and therefore a superkey, hence this table does comform to BCNF. (https://www.vertabelo.com/blog/technical-articles/boyce-codd-normal-form-bcnf).
+The \{{name, founded\}} tuple is candidate key. Had this been implemented as a composite primary key there would have been no requirement for the additional `id' attribute, however as this key is used in multiple places as a foreign key to other tables (including the self reference in this table), it is more efficient to use an id field than a composite of two string column. x is a candidate key and therefore a superkey, hence this table does comform to BCNF. (https://www.vertabelo.com/blog/technical-articles/boyce-codd-normal-form-bcnf).
 
 \subsubsection{Founder}
 id $\Rightarrow$ \{{firstname, lastname, dob, country\_of\_origin\}}\\
 
 The only functional dependency present is the base dependency that all columns are functionally dependent on the `id' primary key. Whilst on first glance it appears that other dependencies may exist such as \\\\
-\{{firstname, lastname\}} \{{$\Rightarrow$ dob, country\_of\_origin \}}\\\\
+\{{firstname, lastname\}} $\Rightarrow$ \{{dob, country\_of\_origin\}}\\\\
 these dependencies may hold for some states of the relation (or \emph{relational variable} - (JOSH - ref date), but as there are no unique constraints on any of these attributes, it is possible (if unlikely) to have founders with the same name, date of birth and country of origin in the relation (just as it is in the real world).
 
 x is a primary key and therefore a superkey, hence this FD is BNCF compliant.
 
 \subsubsection{Acquisition}
-\{{parent\_company\_id, child\_company\_id\, announced\_date\}} $\Rightarrow${\{status, completion\_date}\} \\
+\{{parent\_company\_id, child\_company\_id\, announced\_date}\} $\Rightarrow${\{status, completion\_date}\} \\
 
 This functional dependencies allows for historised records in the relation. Assuming that a parent company does not announce an attempted acquisition with the same child company more than once on the same day, if we know the attributes on the left side of the dependency we can always deduce the status and completion date of the accquisition. This enables historisation, as a company could make multiple failed attempts to acquire another before they finally are successful.
 
@@ -69,4 +69,3 @@ No functional dependencies as this is a many to many join table, i.e a company c
 \end{document}
 \documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
-
