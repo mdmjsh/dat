@@ -15,6 +15,14 @@ CREATE TYPE AQUISITION_STATUS AS ENUM (
     'failed'
 );
 
+-- Not NF violation as the PK is the code.
+DROP TABLE IF EXISTS country CASCADE;
+CREATE TABLE country (
+    name varchar (255)  not null,
+    code ISO3166_ALPHA2 not null,
+    PRIMARY KEY (code)
+);
+
 DROP TABLE IF EXISTS company;
 CREATE TABLE company (
     id serial,
@@ -31,13 +39,6 @@ CREATE TABLE company (
     CONSTRAINT not_own_parent CHECK (id != parent_company_id)
 );
 
--- Not NF violation as the PK is the code.
-DROP TABLE IF EXISTS country CASCADE;
-CREATE TABLE country (
-    name varchar (255)  not null,
-    code ISO3166_ALPHA2 not null,
-    PRIMARY KEY (code)
-);
 
 CREATE TABLE founder (
     id serial,
@@ -63,9 +64,12 @@ CREATE TABLE acquistion (
     price_usd NUMERIC default null,
     announced_date DATE not null,
     completion_date DATE default null,
+    failed_date DATE default null,
     FOREIGN KEY (parent_company_id) REFERENCES company (id),
     FOREIGN KEY (child_company_id) REFERENCES company (id),
-    CONSTRAINT no_zero_acquisitions CHECK (price_usd > 0),
+    CONSTRAINT no_zero_acquisitions CHECK (price_usd > 0)
+
+    ,
 
     -- If an acquisition is failed it must not have a completion date
     CONSTRAINT check_completion_date CHECK (completion_date >= announced_date),
@@ -76,7 +80,7 @@ CREATE TABLE acquistion (
     -- No completion date for failed acquisitions
     CONSTRAINT check_no_failed_completion_dates CHECK (
         status <> 'failed'
-        or status = 'failed' AND (completion_date IS NULL)))
+        or status = 'failed' AND (completion_date IS NULL))
 );
 
 CREATE FUNCTION acquisition_date_constraint() RETURNS trigger AS $acquisition_date_constraint$
@@ -92,3 +96,5 @@ $acquisition_date_constraint$ LANGUAGE plpgsql;
 -- Run the trigger whenever a row is inserted or upated to acquisitions
 CREATE TRIGGER acquisition_date_constraint BEFORE INSERT OR UPDATE ON acquistion
     FOR EACH ROW EXECUTE PROCEDURE acquisition_date_constraint();
+
+

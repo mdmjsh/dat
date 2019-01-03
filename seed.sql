@@ -18,12 +18,13 @@ INSERT INTO country(name, code)
 VALUES ('Jupiter',
         'CN');
 
- Founders
+-- Founders
 INSERT INTO founder(firstname, lastname, dob, country_of_origin)
 VALUES ('Elon', 'Musk',
-        '1971-28-06',
-        'SA') -- Companies
+        '1971-06-28',
+        'SA')
 
+-- Companies
 INSERT INTO company(name, founded, country_code, parent_company_id)
 VALUES ('Tesla',
         '2003-01-01',
@@ -40,20 +41,20 @@ VALUES ('Tesla',
                           1), ('Riviera Tool LLC',
                                '2007-01-01',
                                'US',
-                               1), -- Fails - not_own_parent constraint
-
+                               1)
+-- Fails - not_own_parent constraint
 INSERT INTO company(name, founded, country_code, parent_company_id)
 VALUES ('Foo',
         '2018-12-15',
         'US',
-        2);
+        6);
 
  --  >> new row for relation "company" violates check constraint "not_own_parent"
- -- Founder Companies
 
+
+-- Founder Companies
 INSERT INTO founder_companies(founder_id, company_id)
-VALUES (1,
-        1);
+VALUES (1,1);
 
  -- Acquisitions
 
@@ -85,6 +86,7 @@ VALUES(1,
 
  -- Fails - check_no_failed_completion_dates
 -- >> new row for relation "acquistion" violates check constraint "check_no_failed_completion_dates"
+-- https://www.postgresql.org/docs/8.3/errcodes-appendix.html (check_violation)
 
 INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date, completion_date)
 VALUES(1,
@@ -92,12 +94,13 @@ VALUES(1,
        'failed',
        '2015-06-08',
        '2015-06-09');
+--> 23514: new row for relation "acquistion" violates check constraint "check_no_failed_completion_dates"
 
  -- Fails - acquisition_date_constraint
 
 INSERT INTO acquistion (parent_company_id, child_company_id, announced_date)
 VALUES(2,
-       6,
-       '2018-12-14');
+       5,
+       '2006-12-31');
 
- -- << 2018-12-14 Acquistion cannot be announced before company founded
+ -- << P0001: 2006-12-31 Acquistion cannot be announced before company founded!
