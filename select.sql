@@ -38,8 +38,7 @@ WHERE founded > '1999-12-31';
  b)
 SELECT id
 FROM company
-WHERE country_code IN ('UK',
-                       'US');
+WHERE country_code IN ('UK', 'US');
 
  c)
 SELECT distinct(parent_company_id)
@@ -61,7 +60,8 @@ FROM
 JOIN
   (SELECT *
    FROM acquistion
-   WHERE status = 'completed')c ON c.child_company_id = f.child_company_id
+   WHERE status = 'completed')c
+   ON c.child_company_id = f.child_company_id
 WHERE c.completion_date > f.failed_date;
 
  f)
@@ -81,7 +81,8 @@ ORDER BY count(founder_id) DESC LIMIT 10;
                 c.id,
                 c.name
    FROM company c
-   INNER JOIN comp p ON p.id = c.parent_company_id)
+   INNER JOIN comp p
+   ON p.id = c.parent_company_id)
 SELECT comp.name
 FROM comp;
 
