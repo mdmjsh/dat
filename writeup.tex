@@ -1,5 +1,7 @@
 \documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
+\renewcommand{\theenumi}{\alph{enumi}}
+\renewcommand{\labelenumi}{\theenumi)}
 
 \title{Database Design}
 \author{Joshua Harrison}
@@ -64,6 +66,56 @@ x is a candidate key and therefore a superkey, hence this table is compliant to 
 
 \subsubsection{founder\_companies}
 No functional dependencies as this is a many to many join table, i.e a company can have many founders, and a founder can found many companies.
+
+
+\section{SQL}
+\begin{enumerate}
+ \item\label{part1} SELECT id
+FROM company
+WHERE founded $>$ `1999-12-31';
+  \item\label{part1} SELECT id
+FROM company
+WHERE country\_code IN (`UK', `US');
+  \item\label{part1} SELECT distinct(parent\_company\_id)
+FROM acquistion
+WHERE status = `completed';
+  \item\label{part1}SELECT founder\_id,
+       COUNT (founder\_id)
+FROM founder\_companies
+GROUP BY founder\_id HAVING COUNT (founder\_id) $>=$ 3;
+  \item\label{part1} SELECT f.child\_company\_id
+FROM
+  (SELECT *
+   FROM acquistion
+   WHERE status = 'failed')f \\
+JOIN \\
+   (SELECT *
+   FROM acquistion
+   WHERE status = 'completed')c \\ ON c.child\_company\_id = f.child\_company\_id
+WHERE c.completion\_date $>$ f.failed\_date;
+  \item\label{part1} SELECT founder\_id,
+       count(founder\_id)
+FROM founder\_companies \\
+GROUP BY founder\_id \\
+ORDER BY count(founder\_id) DESC LIMIT 10;
+  \item\label{part1} WITH RECURSIVE comp AS \\
+  ( SELECT parent\_company\_id,
+           id,
+           name
+   FROM \\ company
+   WHERE name = `Tesla' \\
+   UNION \\ SELECT c.parent\_company\_id,
+                c.id,
+                c.name
+   FROM company c \\
+   INNER JOIN comp p  \\ ON p.id = c.parent\_company\_id)
+SELECT comp.name
+FROM comp;
+
+\end{enumerate}
+
+Of note here are queries \emph{e} and \emph{g}. Query \emph{e} is of note as it makes use
+
 
 
 \end{document}
