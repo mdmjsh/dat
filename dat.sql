@@ -5,11 +5,7 @@ CREATE TYPE ISO3166_ALPHA2 AS ENUM ( 'DE', 'FR', 'GB', 'US', 'JP', 'CN');
 
 CREATE TYPE AQUISITION_STATUS AS ENUM ( 'announced' 'completed', 'failed');
 
- -- Not NF violation as the PK is the code.
-
 DROP TABLE IF EXISTS country CASCADE;
-
-
 CREATE TABLE country ( name varchar (255) NOT NULL, code ISO3166_ALPHA2 NOT NULL, PRIMARY KEY (code));
 
 
@@ -49,7 +45,6 @@ CREATE FUNCTION acquisition_date_constraint() RETURNS TRIGGER AS $acquisition_da
                                                          NEW.announced_date; END IF; RETURN NEW; END; $acquisition_date_constraint$ LANGUAGE plpgsql;
 
  -- Run the trigger whenever a row is inserted or upated to acquisitions
-
 CREATE TRIGGER acquisition_date_constraint
 BEFORE
 INSERT
