@@ -28,7 +28,7 @@ CREATE TABLE founder_companies( founder_id serial, company_id serial,
                                FOREIGN KEY (company_id) REFERENCES company (id));
 
 
-CREATE TABLE acquistion ( parent_company_id int NOT NULL, child_company_id int NOT NULL, status AQUISITION_STATUS, price_usd NUMERIC DEFAULT NULL, announced_date DATE NOT NULL, completion_date DATE DEFAULT NULL, failed_date DATE DEFAULT NULL,
+CREATE TABLE acquistion ( parent_company_id int NOT NULL, child_company_id int NOT NULL, status AQUISITION_STATUS, price_usd NUMERIC DEFAULT NULL, announced_date DATE NOT NULL, completion_date DATE DEFAULT NULL,
                          FOREIGN KEY (parent_company_id) REFERENCES company (id),
                          FOREIGN KEY (child_company_id) REFERENCES company (id), CONSTRAINT no_zero_acquisitions CHECK (price_usd > 0) , -- If an acquisition is failed it must not have a completion date
  CONSTRAINT check_completion_date CHECK (completion_date >= announced_date), -- A company cannot acquire itself

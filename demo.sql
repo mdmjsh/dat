@@ -66,7 +66,6 @@ CREATE TABLE acquistion (
     price_usd NUMERIC default null,
     announced_date DATE not null,
     completion_date DATE default null,
-    failed_date DATE default null,
     FOREIGN KEY (parent_company_id) REFERENCES company (id),
     FOREIGN KEY (child_company_id) REFERENCES company (id),
     CONSTRAINT no_zero_acquisitions CHECK (price_usd > 0)
@@ -179,11 +178,10 @@ VALUES(1,
        '2017-11-06');
 
 -- Test data for query d
-INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date, failed_date)
+INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date)
 VALUES(1,
        5,
        'failed',
-       '2015-06-07',
        '2015-06-07');
 
 INSERT INTO founder(firstname, lastname, dob, country_of_origin)
