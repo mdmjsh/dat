@@ -117,8 +117,28 @@ This functional dependencies allows for historised records in the relation. Assu
 
 x is a candidate key and therefore a superkey, hence this table is compliant to BCNF.
 
-\subsubsection{founder\_companies}
+\subsubsection{Founder\_companies}
 No functional dependencies as this is a many to many join table, i.e a company can have many founders, and a founder can found many companies.
+
+\subsection{Constraints}
+\begin{enumerate}
+
+ \item\label{part1}
+ \begin{math} \{{id \mid \exists \ name, founded, country\_code, parent\_company\_id, (company(id, name, founded, country\_code, parent\_company\_id) \land id = parent\_company\_id)   \}} \end{math}
+
+  \item\label{part1} \begin{math}\{{(parent\_company\_id, child\_company\_id) \mid \exists \  status, price\_usd, announced\_date, completion\_date, (acquistion(parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date) \land completion\_date > announced\_date )\}} \end{math}
+
+ \item\label{part1}
+ \begin{math} \{{(parent\_company\_id, child\_company\_id) \mid \exists \ status, price\_usd, announced\_date, completion\_date, (acquistion(parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date) \land status \lnot `failed' \lor status = `failed' \land completion\_date = completion\_date  \}}
+ \end{math}
+ \\ n.b. `completion\_date = completion\_date' is a means for asserting that the completion\_date value is not NULL.
+
+
+ \item\label{part1}
+ \begin{math} \{{id \mid \exists \ name, founded, country\_code, parent\_company\_id,  parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date, (company(id, name, founded, country\_code, parent\_company\_id,  parent\_company\_id) \land acquistion(parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date) \land announced\_date <  founded  \}}
+ \end{math}
+\end{enumerate}
+
 
 
 \section{SQL}
@@ -126,11 +146,11 @@ No functional dependencies as this is a many to many join table, i.e a company c
 
  \item\label{part1}\begin{verbatim}SELECT id
 FROM company
-WHERE founded $>$ `1999-12-31';\end{verbatim}
+WHERE founded > `1999-12-31';\end{verbatim}
 
   \item\label{part1}\begin{verbatim}SELECT id
 FROM company
-WHERE country_code IN (`UK', 'US');\end{verbatim}
+WHERE country_code IN (`UK', `US');\end{verbatim}
   \item\label{part1}\begin{verbatim}SELECT distinct(parent_company_id)
 FROM acquistion
 WHERE status = `completed';\end{verbatim}
@@ -142,11 +162,11 @@ GROUP BY founder_id HAVING COUNT(founder_id) >= 3;\end{verbatim}
 FROM
   (SELECT *
    FROM acquistion
-   WHERE status = 'failed')f
+   WHERE status = `failed')f
 JOIN
   (SELECT *
    FROM acquistion
-   WHERE status = 'completed')c
+   WHERE status = `completed')c
    ON c.child_company_id = f.child_company_id
 WHERE c.completion_date > f.failed_date;\end{verbatim}
   \item\label{part1}\begin{verbatim}SELECT founder_id,

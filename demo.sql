@@ -68,9 +68,8 @@ CREATE TABLE acquistion (
     completion_date DATE default null,
     FOREIGN KEY (parent_company_id) REFERENCES company (id),
     FOREIGN KEY (child_company_id) REFERENCES company (id),
-    CONSTRAINT no_zero_acquisitions CHECK (price_usd > 0)
+    CONSTRAINT no_zero_acquisitions CHECK (price_usd > 0),
 
-    ,
 
     -- If an acquisition is failed it must not have a completion date
     CONSTRAINT check_completion_date CHECK (completion_date >= announced_date),
