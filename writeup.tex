@@ -126,11 +126,11 @@ The following constraints are expressed using Relational Calculus (RC) and then 
 \begin{enumerate}
 
   \item\label{part1}  RC:
- \begin{multline}
+ \begin{multline*}
    \{{id \mid \exists \ name, founded, country\_code, \\
    parent\_company\_id, (company(id, name, \\
    founded, country\_code, parent\_company\_id) \land \ id = parent\_company\_id)\}}
- \end{multline}
+ \end{multline*}
  SQL:
  \begin{verbatim}
   ALTER TABLE company ADD CONSTRAINT not_own_parent
@@ -138,9 +138,9 @@ The following constraints are expressed using Relational Calculus (RC) and then 
  \end{verbatim}
 
 \item\label{part1}  RC:
-  \begin{multline}
+  \begin{multline*}
   \{{(parent\_company\_id,  child\_company\_id) \mid \exists \ status, price\_usd, \\ announced\_date, completion\_date, (acquistion(parent\_company\_id, \\ child\_company\_id, status, price\_usd, announced\_date, completion\_date) \\ \land \ completion\_date < announced\_date )\}}
-  \end{multline}
+  \end{multline*}
  SQL: \begin{verbatim}
  ALTER TABLE acquisition ADD CONSTRAINT check_completion_date
  CHECK (completion_date >= announced_date);
@@ -148,13 +148,13 @@ The following constraints are expressed using Relational Calculus (RC) and then 
 
 
  \item\label{part1}
- \begin{multline}
+ \begin{multline*}
  \{{(parent\_company\_id, child\_company\_id) \mid \exists \ status, price\_usd, announced\_date, \\
  completion\_date, (acquistion(parent\_company\_id, child\_company\_id, status, \\
  price\_usd, announced\_date, completion\_date)\\
  \land status \ \lnot \  `failed' \\
  \ \lor \ (status = `failed' \land completion\_date = completion\_date)  \}}
-\end{multline}
+\end{multline*}
  \\ n.b. `completion\_date = completion\_date' is a means for asserting that the completion\_date value is not NULL. \\
   SQL: \begin{verbatim}
 ALTER TABLE acquisition ADD CONSTRAINT CONSTRAINT
@@ -166,7 +166,7 @@ check_no_failed_completion_dates CHECK (
 
 
  \item\label{part1}
- \begin{multline} RC:
+ \begin{multline*} RC:
  \{{id \mid \exists \ name, founded, country\_code, \\
  parent\_company\_id,  parent\_company\_id, child\_company\_id, \\
  status, price\_usd, announced\_date, completion\_date, \\
@@ -175,7 +175,7 @@ check_no_failed_completion_dates CHECK (
  \ \land \ acquistion(parent\_company\_id, child\_company\_id, \\
  status, price\_usd, announced\_date, completion\_date) \\
  \ \land \ announced\_date <  founded  \}}
- \end{multline}
+ \end{multline*}
    SQL: This check cannot be enforced using SQL as a pure constraint, as it opporates on values from multiple tables in the schema. It is possible to make use of a trigger which is called on row update to check for the constraint and raise an exception should a write request attempt be found to be in violation. A potential implemention is:  \begin{verbatim}
 
    CREATE FUNCTION acquisition_date_constraint() RETURNS trigger
@@ -206,31 +206,31 @@ Here the custom function \emph{acquisition\_date\_constraint} is defined to retu
 All of the queries in this section are expressed using Relational Algebra (RA), except for \emph{query a} is expressed using Relational Calculus (RC).
  \begin{enumerate}
 
- \item\label{part1}\begin{multline}
+ \item\label{part1}\begin{multline*}
  \{{id \mid \exists \ name, founded, country\_code, parent\_company\_id, \\ (company(id, name, founded, country\_code, parent\_company\_id) \\
   \land \ founded \ > \ `1999-12-31')\}}
- \end{multline}
-  \item\label{part1}\begin{multline}
+ \end{multline*}
+  \item\label{part1}\begin{multline*}
   \pi \ id (\sigma \ country\_code = `US' \ \lor country\_code = `GB' (company))
- \end{multline}
+ \end{multline*}
 
-  \item\label{part1}\begin{displaymath}}
+  \item\label{part1}\begin{displaymath}
   \pi \ parent\_company\_id (\sigma status \ = `completed' (acquistion))
  \end{displaymath}
  n.b. The SQL equivolent of this query (see \emph {section 3}) uses the DISTINCT operator to remove duplicates, as RA is based on set theory this is not neccassary here.
 
-  \item\label{part1}\begin{multline} \pi \ founder\_id (\sigma founder\_id \geq 3 (founder\_id \ \\
+  \item\label{part1}\begin{multline*} \pi \ founder\_id (\sigma founder\_id \geq 3 (founder\_id \ \\
   g \ count (founder\_id) (founder\_companies))
- \end{multline}
+ \end{multline*}
  n.b. here the aggregate opperator \emph{g} is used to count over the occurances of each founder\_id in the relational. This aggregate can then be selected over.
-  \item\label{part1}\begin{multline}
+  \item\label{part1}\begin{multline*}
   \pi \ child\_company\_id (f \bowtie c \ with (f := \\
   (\pi \ child\_company\_id, announced\_date (\sigma \ status = `failed' (acquistion))) \\
   c := (\pi \ child\_company\_id, completion\_date \\
   (\sigma \ status = `completed' (acquistion)))
   ) \\
   \sigma completion\_date > announced\_date)
- \end{multline}
+ \end{multline*}
  In this query we select all companies with a failed acquisition and completed acuisitions and name the resulting relationals \emph{f} \& \emph{c} respectively using the \emph{with} operator. In both relations the \emph{child\_company\_id} and is kept, within \emph{f} the \emph{announced\_date} attribute is kept, and within {c} the \emph{completion\_date} attribute is kept. The rest of the fields are projected away. The relations are then joined using a natural join which utalises the fact that both relations have a \emph{child\_company\_id} attribute.We can then compare the \emph{completion\_date} of \emph{c} to the \emph{announced\_date} of \emph{f} to select only those in which the completed acquistion occurred after the failed attempt.
 
  It is worth noting that this query assumes that the acquistions are announced and resolved (i.e. fail or complete) in contiguous mannor in respect of their annnounced dates. The schema does not record the \emph {failed\_date} for failed acquisitions. Such an addition would make this query more accurate as the completion and failed dates could be directly compared, however this would affect the database design as if the attribute were to be added to the acquisitions relation then addtional functional dependencies would be introduced which would cause third normal form (3NF) violations. For example, \{{anounced\_date, status, parent\_company\_id, child\_company\_id }\} $\Rightarrow$ \{{completion\_date, failed\_date}\} or simply \{{completion\_date $\Leftrightarrow$ failed\_date}\}. Both of these examples are 3NF violations and as both introduce functional dependencies between non-key attributes.
@@ -292,7 +292,11 @@ FROM comp;\end{verbatim}
 
 Of note here is query \emph{g} which implements a recursive query. Here the WITH operator is used to signify a Common Table Expression (CTE) - affectively a temporary table to be used for the duration of the query. The RECURSIVE operator is used to signify that the CTE is to be used recursively, and the UNION operator creates the recursive call by joining a select statement to the CTE (https://www.postgresql.org/docs/9.1/queries-with.html).
 
+\section {Data Mining}
 
+In order to successfully perform a data mining project, it is important to ask direct and specific questions to be address, rather than broad or open ended ones.  The focus of this data mining activity be framed as `predict whether an acquisition is likely to succeed or fail, and how long will the process is likely to take'.
+
+This project shall be conducted using the CRISPDM methodology. The methodolgy looks to build rich data mining projects
 
 \end{document}
 \documentclass[12pt]{article}
