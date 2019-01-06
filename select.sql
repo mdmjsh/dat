@@ -62,7 +62,7 @@ JOIN
    FROM acquistion
    WHERE status = 'completed')c
    ON c.child_company_id = f.child_company_id
-WHERE c.announced_date > f.announced_date;
+WHERE c.completion_date > f.announced_date;
 
  f)
 SELECT founder_id,

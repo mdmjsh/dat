@@ -31,10 +31,10 @@ For the given problem the following schema has been defined. \\
 \begin{verbatim}
 --PostgreSQL 9.6
 
-CREATE TYPE ISO3166_ALPHA2 AS ENUM ( 'DE', 'FR', 'GB', 'US', 'JP', 'CN');
+CREATE TYPE ISO3166_ALPHA2 AS ENUM ( `DE', `FR', `GB', `US', `JP', `CN');
 
 
-CREATE TYPE AQUISITION_STATUS AS ENUM ( 'announced' 'completed', 'failed');
+CREATE TYPE AQUISITION_STATUS AS ENUM ( `announced' `completed', `failed');
 
 DROP TABLE IF EXISTS country CASCADE;
 CREATE TABLE country ( name varchar (255) NOT NULL, code ISO3166_ALPHA2 NOT NULL, PRIMARY KEY (code));
@@ -124,20 +124,49 @@ No functional dependencies as this is a many to many join table, i.e a company c
 \begin{enumerate}
 
  \item\label{part1}
- \begin{math} \{{id \mid \exists \ name, founded, country\_code, parent\_company\_id, (company(id, name, founded, country\_code, parent\_company\_id) \land id = parent\_company\_id)   \}} \end{math}
+ \begin{displaymath} \{{id \mid \exists \ name, founded, country\_code, parent\_company\_id, (company(id, name, \\ founded, country\_code, parent\_company\_id) \land id = parent\_company\_id)   \}} \end{displaymath}
 
-  \item\label{part1} \begin{math}\{{(parent\_company\_id, child\_company\_id) \mid \exists \  status, price\_usd, announced\_date, completion\_date, (acquistion(parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date) \land completion\_date > announced\_date )\}} \end{math}
+  \item\label{part1} \begin{displaymath}\{{(parent\_company\_id, child\_company\_id) \mid \exists \  status, price\_usd, announced\_date, completion\_date, (acquistion(parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date) \land completion\_date > announced\_date )\}} \end{displaymath}
 
  \item\label{part1}
- \begin{math} \{{(parent\_company\_id, child\_company\_id) \mid \exists \ status, price\_usd, announced\_date, completion\_date, (acquistion(parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date) \land status \lnot `failed' \lor status = `failed' \land completion\_date = completion\_date  \}}
- \end{math}
+ \begin{displaymath} \{{(parent\_company\_id, child\_company\_id) \mid \exists \ status, price\_usd, announced\_date, completion\_date, (acquistion(parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date) \land status \lnot `failed' \lor status = `failed' \land completion\_date = completion\_date  \}}
+ \end{displaymath}
  \\ n.b. `completion\_date = completion\_date' is a means for asserting that the completion\_date value is not NULL.
 
 
  \item\label{part1}
- \begin{math} \{{id \mid \exists \ name, founded, country\_code, parent\_company\_id,  parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date, (company(id, name, founded, country\_code, parent\_company\_id,  parent\_company\_id) \land acquistion(parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date) \land announced\_date <  founded  \}}
- \end{math}
+ \begin{displaymath} \{{id \mid \exists \ name, founded, country\_code, parent\_company\_id,  parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date, (company(id, name, founded, country\_code, parent\_company\_id,  parent\_company\_id) \land acquistion(parent\_company\_id, child\_company\_id, status, price\_usd, announced\_date, completion\_date) \land announced\_date <  founded  \}}
+ \end{displaymath}
 \end{enumerate}
+
+\section{Relations - Relational Calculus \& Algebra}
+All of the queries in this section are expressed using Relational Algebra, except for \emph{query a} is expressed using Relational Calculus.
+ \begin{enumerate}
+
+ \item\label{part1}\begin{displaymath}
+ \{{id \mid \exists \ name, founded, country\_code, parent\_company\_id, (company(id, name, founded, country\_code, parent\_company\_id) ^ founded > `1999-12-31')\}}
+ \end{displaymath}
+  \item\label{part1}\begin{displaymath}
+  \pi \ id (\sigma \ country\_code = `US' \ \lor country\_code = `GB' (company))
+
+ \end{displaymath}
+  \item\label{part1}\begin{displaymath} \pi \ parent\_company\_id (\sigma status \ = `completed' (acquistion))
+ \end{displaymath}
+ n.b. The SQL equivolent of this query (see \emph {section 3}) uses the DISTINCT operator to remove duplicates, as RA is based on set theory this is not neccassary here.
+  \item\label{part1}\begin{displaymath} \pi \ founder\_id (\sigma founder\_id \geq 3 (founder\_id \  g \ count (founder\_id) (founder\_companies))
+ \end{displaymath}
+ n.b. here the aggregate opperator \emph{g} is used to count over the occurances of each founder\_id in the relational. This aggregate can then be selected over.
+  \item\label{part1}\begin{displaymath}\pi \ child\_company\_id (f \bowtie c \ with (f := (\pi \ child\_company\_id, announced\_date (\sigma \ status = `failed' (acquistion)))
+  c := (\pi \ child\_company\_id, completion\_date / (\sigma \ status = `completed' (acquistion)))
+  ) \sigma completion\_date > announced\_date)
+ \end{displaymath}
+ In this query we select all companies with a failed acquisition and completed acuisitions and name the resulting relationals \emph{f} \& \emph{c} respectively using the \emph{with} operator. In both relations the \emph{child\_company\_id} and is kept, within \emph{f} the \emph{announced\_date} attribute is kept, and within {c} the \emph{completion\_date} attribute is kept. The rest of the fields are projected away. The relations are then joined using a natural join which utalises the fact that both relations have a \emph{child\_company\_id} attribute.We can then compare the \emph{completion\_date} of \emph{c} to the \emph{announced\_date} of \emph{f} to select only those in which the completed acquistion occurred after the failed attempt.
+
+ It is worth noting that this query assumes that the acquistions are announced and resolved (i.e. fail or complete) in contiguous mannor in respect of their annnounced dates. The schema does not record the \emph {failed\_date} for failed acquisitions. Such an addition would make this query more accurate as the completion and failed dates could be directly compared, however this would affect the database design as if the attribute were to be added to the acquisitions relation then addtional functional dependencies would be introduced which would cause third normal form (3NF) violations. For example, \{{anounced\_date, status, parent\_company\_id, child\_company\_id }\} $\Rightarrow$ \{{completion\_date, failed\_date}\} or simply \{{completion\_date $\Leftrightarrow$ failed\_date}\}. Both of these examples are 3NF violations and as both introduce functional dependencies between non-key attributes.
+
+  \item\label{part1} This query is not expressable in RA or RC due to the lack of a native \emph{limit} function.
+  \item\label{part1} This query is not expressable in RA or RC due to the lack recurrsion in the query languages.
+  \end{enumerate}
 
 
 
