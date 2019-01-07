@@ -203,27 +203,3 @@ VALUES ('Joey',
         '2003-01-01',
         'US',
         7);
-
-
-WITH RECURSIVE comp AS (
- SELECT
- parent_company_id,
- id,
- name
- FROM
- company
- WHERE
- name = 'Tesla'
- UNION
- SELECT
- c.parent_company_id,
- c.id,
- c.name
- FROM
- company c
- INNER JOIN comp p ON p.id = c.parent_company_id
-) SELECT
- comp.name
-FROM
- comp;
-
