@@ -42,7 +42,7 @@ WHERE country_code IN ('UK', 'US');
 
  c)
 SELECT distinct(parent_company_id)
-FROM acquistion
+FROM acquisition
 WHERE status = 'completed';
 
  d)
@@ -55,11 +55,11 @@ GROUP BY founder_id HAVING COUNT (founder_id) >= 3;
 SELECT f.child_company_id
 FROM
   (SELECT *
-   FROM acquistion
+   FROM acquisition
    WHERE status = 'failed')f
 JOIN
   (SELECT *
-   FROM acquistion
+   FROM acquisition
    WHERE status = 'completed')c
    ON c.child_company_id = f.child_company_id
 WHERE c.completion_date > f.announced_date;

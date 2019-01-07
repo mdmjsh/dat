@@ -59,7 +59,7 @@ CREATE TABLE founder_companies(
     FOREIGN KEY (company_id) REFERENCES company (id)
 );
 
-CREATE TABLE acquistion (
+CREATE TABLE acquisition (
     parent_company_id int not null,
     child_company_id int not null,
     status AQUISITION_STATUS,
@@ -94,7 +94,7 @@ CREATE FUNCTION acquisition_date_constraint() RETURNS trigger AS $acquisition_da
 $acquisition_date_constraint$ LANGUAGE plpgsql;
 
 -- Run the trigger whenever a row is inserted or upated to acquisitions
-CREATE TRIGGER acquisition_date_constraint BEFORE INSERT OR UPDATE ON acquistion
+CREATE TRIGGER acquisition_date_constraint BEFORE INSERT OR UPDATE ON acquisition
     FOR EACH ROW EXECUTE PROCEDURE acquisition_date_constraint();
 
 
@@ -136,7 +136,7 @@ VALUES (1,1),
 (1,2),
 (1,3);
 
-INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date)
+INSERT INTO acquisition (parent_company_id, child_company_id, status, announced_date)
 VALUES(1,
        2,
        'completed',
@@ -154,7 +154,7 @@ VALUES(1,
        'completed',
        '2015-06-08');
 
-INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date, completion_date)
+INSERT INTO acquisition (parent_company_id, child_company_id, status, announced_date, completion_date)
 VALUES(1,
        2,
        'completed',
@@ -177,7 +177,7 @@ VALUES(1,
        '2017-11-06');
 
 -- Test data for query d
-INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date)
+INSERT INTO acquisition (parent_company_id, child_company_id, status, announced_date)
 VALUES(1,
        5,
        'failed',

@@ -13,18 +13,18 @@
 
 \section{Relational Design}
 
-\subsection{Relationl schema design}
-This section will discuss some of the noteworthy descisions taken in the design of the relational schema for the given problem domain.
+\subsection{Relational schema design}
+This section will discuss some of the noteworthy decisions taken in the design of the relational schema for the given problem domain.
 The full SQL for the relational schema can be seen in \emph{appendix 1.1}. Note: PostgreSQL 9.6 is used for all DML and DDL defined in this document. The online SQL compiler https://rextester.com was used to validate the schema and its constraints.
 
 \subsubsection{Types}
-The schema defines two custom enum types, namely  `ISO3166\_ALPHA2' (based on the ISO3166 standard), and `AQUISITION\_STATUS'. It is worth noting that `ISO3166\_ALPHA2' is loaded with a subset of the full standard as this is fit for the purpose of our data model.
+The schema defines two custom enum types, namely  `ISO3166\_ALPHA2' (based on the ISO3166 standard), and `ACQUISITION\_STATUS'. It is worth noting that `ISO3166\_ALPHA2' is loaded with a subset of the full standard as this is fit for the purpose of our data model.
 
-The AQUISITION\_STATUS status enum is implement by the \emph{status} column in the \emp{acquisition} table, and the ISO3166\_ALPHA2 enum is implemented diretly by the \emp{country} table as well as all tables which contain a foriegn key to this (\emph{company}, \emph{founder}).
+The ACQUISITION\_STATUS status enum is implement by the \emph{status} column in the \emp{acquisition} table, and the ISO3166\_ALPHA2 enum is implemented directly by the \emph{country} table as well as all tables which contain a foreign key to this (\emph{company}, \emph{founder}).
 
-The use of Enums is advantegous as it provides a means of implict santisation to the tables that implement these types. For example it means an \emph{acquisition} instance could never be created with an undeseriable status (i.e a status outside the domain of strings defined by the enum). The same is true of the ISO3166\_ALPHA2 implemention, through it we can be assured the quality of the country code in the database is acurate. Considering Date's  oberservation [REF - Date] that a table can be thought of as a predicate for which each row is a true proposition, custom data types enable use to constrain the domain of the predicate to only relevant values. For example, the ISO3166\_ALPHA2 implemented in this model it would be impossible to enter a country with the values `Norway', `NO'. This is desireable in this model world as we are only interested in modelling companies and founders that are in the domain of the ISO3166\_ALPHA2 custom type.
+The use of Enums is advantageous as it provides a means of implicit santisation to the tables that implement these types. For example it means an \emph{acquisition} instance could never be created with an undesirable status (i.e a status outside the domain of strings defined by the enum). The same is true of the ISO3166\_ALPHA2 implementation, through it we can be assured the quality of the country code in the database is accurate. Considering Date's  observation [REF - Date] that a table can be thought of as a predicate for which each row is a true proposition, custom data types enable us to constrain the table to only the domain of the predicate. For example, the ISO3166\_ALPHA2 implemented in this model it would be impossible to enter a country with the values `Norway', `NO' as the `NO' country code does not exist in the custom defined type.
 
-It should be noted that the tuple (`Norway', `CN') would be a valid entry into the country table. We can verify that this record is false as per the ISO3166 standard [REF ISO3166], however there is nothing wrong with it from the data storage level. Therefore although implementing the custom type has helped with integrity, it has not guarenteed the quality of the data. To frame ths in the context of propositional logic as prescribed by Date; is possible for our schema to record false propositions. Dropping the country table altogether and extending the SO3166\_ALPHA2 type to include a country name and code tuple would therefore be an improvement that could be made to this model if we wanted to introduce more rigour and reduce the potential such inaccurracies.
+It should be noted that the tuple (`Norway', `CN') would be a valid entry into the country table (as `CN' does exist in the custom type). We can verify that this record is false as per the ISO3166 standard as CN is the country code for China, however there is nothing wrong with it from the data storage level as defined by this schema. Therefore although implementing the custom type has helped, it has not guarantee the quality of the data. To frame ths in the context of propositional logic as prescribed by Date; it is possible for our schema to record false propositions. Dropping the country table altogether and extending the SO3166\_ALPHA2 type to include a country name and code tuple would therefore be a further improvement that could be made to this model if we wanted to introduce more rigour and reduce the error potential for such inaccuracies.
 
 \subsubsection{Relational Schema Design}
 For the given problem the following schema has been defined. \\
@@ -74,7 +74,7 @@ CREATE TABLE founder_companies( founder_id serial, company_id serial,
                                REFERENCES company (id));
 
 
-CREATE TABLE acquistion ( parent_company_id int NOT NULL,
+CREATE TABLE acquisition ( parent_company_id int NOT NULL,
                         child_company_id int NOT NULL,
                         status AQUISITION_STATUS,
                         price_usd NUMERIC DEFAULT NULL,
@@ -89,37 +89,33 @@ CREATE TABLE acquistion ( parent_company_id int NOT NULL,
 
 \subsection{Normalisation}
 A relational schema can be said to be compliant to BCNF if for all of its functional dependencies (x $\Rightarrow$ y) if one of the following statements is true: \\\\
-1) y is a subset of x (trival functional dependency) \\
-2) x is a superkey (A subset of a candidate key for the relation). \\
-Given this defintion and with the non-trivial functional dependcies highlighted below, we can judge that this schema is compliant to BCNF.
+1) \emph{y} is a subset of x (trivial functional dependency) \\
+2) \emph{x} is a superkey (a subset of a candidate key for the relation). \\
+Given this definition and with the non-trivial functional dependencies highlighted below, we can judge that this schema is compliant to BCNF - this is discussed in depth in the following sections.
 
 \subsubsection{Company}
 
 id $\Rightarrow${\{name, founded, country\_code, parent\_company\_id\}} \\
 \{{name, country\_code\}} $\Rightarrow$ {\{founded, parent\_company\_id, id\}} \\
 
-\\ N.B. name and founded seems like a potential functional dependency, but note that in this schema name and country code form a composite unique constraint. That is to say that multiple companies with the same name can exist in the reltaion, provided they are in different countries. Hence functional dependencies with the \{{name, countrycode\}} tuple on the left side do hold, but those with \{{name, founded\}} do not.
+\\ N.B. At first glance a set of functional dependencies with \{{name,  founded}\} on the left side seems to exist, but this does not hold due to the composite unique constraint on name and country code (see \emph{section 1.2}).  That is to say that multiple companies with the same name can exist in the relation, provided they are in different countries. Hence functional dependencies with the \{{name, countrycode\}} tuple on the left side always hold, but those with \{{name, founded\}} will only hold in some data sets.
 
-The \{{name, founded\}} tuple is candidate key. Had this been implemented as a composite primary key there would have been no requirement for the additional `id' attribute, however as this key is used in multiple places as a foreign key to other tables (including the self reference in this table), it is more efficient to use an id field than a composite of two string column. x is a candidate key and therefore a superkey, hence this table does comform to BCNF. (https://www.vertabelo.com/blog/technical-articles/boyce-codd-normal-form-bcnf).
+The \{{name, founded\}} tuple is candidate key. Had this been implemented as a composite primary key there would have been no requirement for the additional `id' attribute, however as this key is used in multiple tables as a foreign key (including the self referential foreign key`parent\_company\_id' in this table), it is more efficient to use a serial id field than a composite of two string columns. \emph{x} is a candidate key and therefore a superkey, hence this table does conform to BCNF. (https://www.vertabelo.com/blog/technical-articles/boyce-codd-normal-form-bcnf).
 
 \subsubsection{Founder}
 id $\Rightarrow$ \{{firstname, lastname, dob, country\_of\_origin\}}\\
 
-The only functional dependency present is the base dependency that all columns are functionally dependent on the `id' primary key. Whilst on first glance it appears that other dependencies may exist such as \\\\
+The only functional dependency present is the base dependency that all columns are functionally dependent on the `id' primary key. Whilst it initially appears that other dependencies may exist such as \\\\
 \{{firstname, lastname\}} $\Rightarrow$ \{{dob, country\_of\_origin\}}\\\\
-these dependencies may hold for some states of the relation (or \emph{relational variable} - (JOSH - ref date), but as there are no unique constraints on any of these attributes, it is possible (if unlikely) to have founders with the same name, date of birth and country of origin in the relation (just as it is in the real world).
-
-x is a primary key and therefore a superkey, hence this FD is BNCF compliant.
+these dependencies are only temporal - i.e they hold for some states of the relation (or \emph{relational variable} - (JOSH - ref date), but as there are no unique constraints on any of these attributes, it is possible (if unlikely) to have founders with the same name, date of birth and country of origin in the relation (just as it is in the real world). \emph{x} is a primary key and therefore a superkey, hence this FD is BNCF compliant.
 
 \subsubsection{Acquisition}
 \{{parent\_company\_id, child\_company\_id\, announced\_date}\} $\Rightarrow${\{status, completion\_date}\} \\
 
-This functional dependencies allows for historised records in the relation. Assuming that a parent company does not announce an attempted acquisition with the same child company more than once on the same day, if we know the attributes on the left side of the dependency we can always deduce the status and completion date of the accquisition. This enables historisation, as a company could make multiple failed attempts to acquire another before they finally are successful.
-
-x is a candidate key and therefore a superkey, hence this table is compliant to BCNF.
+This functional dependencies allows for historised records in the relation. Assuming that a parent company does not announce an attempted acquisition with the same child company more than once on the same day, if we know the attributes on the left side of the dependency we can always deduce the status and completion date of the acquisition. This enables historization, as a company could make multiple failed attempts to acquire another before they finally are successful. As with the company table, this combination could be used as a composite primary key and therefore we can evaluate this table is compliant to BCNF.
 
 \subsubsection{Founder\_companies}
-No functional dependencies as this is a many to many join table, i.e a company can have many founders, and a founder can found many companies.
+There are no functional dependencies as this is a many to many join table, i.e. a company can have many founders, and a founder can found many companies.
 
 \subsection{Constraints}
 The following constraints are expressed using Relational Calculus (RC) and then again in SQL.
@@ -139,7 +135,7 @@ The following constraints are expressed using Relational Calculus (RC) and then 
 
 \item\label{part1}  RC:
   \begin{multline*}
-  \{{(parent\_company\_id,  child\_company\_id) \mid \exists \ status, price\_usd, \\ announced\_date, completion\_date, (acquistion(parent\_company\_id, \\ child\_company\_id, status, price\_usd, announced\_date, completion\_date) \\ \land \ completion\_date < announced\_date )\}}
+  \{{(parent\_company\_id,  child\_company\_id) \mid \exists \ status, price\_usd, \\ announced\_date, completion\_date, (acquisition(parent\_company\_id, \\ child\_company\_id, status, price\_usd, announced\_date, completion\_date) \\ \land \ completion\_date < announced\_date )\}}
   \end{multline*}
  SQL: \begin{verbatim}
  ALTER TABLE acquisition ADD CONSTRAINT check_completion_date
@@ -150,7 +146,7 @@ The following constraints are expressed using Relational Calculus (RC) and then 
  \item\label{part1}
  \begin{multline*}
  \{{(parent\_company\_id, child\_company\_id) \mid \exists \ status, price\_usd, announced\_date, \\
- completion\_date, (acquistion(parent\_company\_id, child\_company\_id, status, \\
+ completion\_date, (acquisition(parent\_company\_id, child\_company\_id, status, \\
  price\_usd, announced\_date, completion\_date)\\
  \land status \ \lnot \  `failed' \\
  \ \lor \ (status = `failed' \land completion\_date = completion\_date)  \}}
@@ -172,11 +168,12 @@ check_no_failed_completion_dates CHECK (
  status, price\_usd, announced\_date, completion\_date, \\
  (company(id, name, founded, country\_code, \\
  parent\_company\_id,  parent\_company\_id) \\
- \ \land \ acquistion(parent\_company\_id, child\_company\_id, \\
+ \ \land \ acquisition(parent\_company\_id, child\_company\_id, \\
  status, price\_usd, announced\_date, completion\_date) \\
  \ \land \ announced\_date <  founded  \}}
  \end{multline*}
-   SQL: This check cannot be enforced using SQL as a pure constraint, as it opporates on values from multiple tables in the schema. It is possible to make use of a trigger which is called on row update to check for the constraint and raise an exception should a write request attempt be found to be in violation. A potential implemention is:  \begin{verbatim}
+   SQL: This check cannot be enforced using SQL as a pure constraint, as it operates on values from multiple tables in the schema. It is possible to make use of a trigger which is called on row insert or update to check for the constraint and raise an exception should a write request attempt be found to be in violation. A potential implementation is:
+ \begin{verbatim}
 
    CREATE FUNCTION acquisition_date_constraint() RETURNS trigger
    AS $acquisition_date_constraint$
@@ -184,7 +181,7 @@ check_no_failed_completion_dates CHECK (
         IF NEW.announced_date < (SELECT founded FROM company
         WHERE id = NEW.child_company_id) THEN
             RAISE EXCEPTION
-            `% Acquistion cannot be announced before
+            `% Acquisition cannot be announced before
             company founded!', NEW.announced_date;
         END IF;
 
@@ -192,14 +189,14 @@ check_no_failed_completion_dates CHECK (
     END;
 $acquisition_date_constraint$ LANGUAGE plpgsql;
 
--- Run the trigger whenever a row is inserted
--- or updated to acquisitions
+-- Run the trigger whenever a row is
+-- inserted or updated to acquisition
 CREATE TRIGGER acquisition_date_constraint
-BEFORE INSERT OR UPDATE ON acquistion
+BEFORE INSERT OR UPDATE ON acquisition
     FOR EACH ROW EXECUTE PROCEDURE acquisition_date_constraint();
    \end{verbatim}
 \end{enumerate}
-Here the custom function \emph{acquisition\_date\_constraint} is defined to return a trigger. The trigger then provides the SQL to constrain the announced date not preceding the founded date of an acquired company, raising an exception if a violation occurs. The function is set to be called on any insert or update to the acquisition table. \\
+Here the custom function \emph{acquisition\_date\_constraint} is defined to return a trigger. The trigger uses SQL a SELECT statement and the NEW keyword to compare the ingress announced date and comparing it to the founded date of the company. An exception is raised if the constraint is violated. The function is set to be called on any insert or update to the acquisition table. \\
 (https://www.postgresql.org/docs/9.1/plpgsql-trigger.html#PLPGSQL-TRIGGER-EXAMPLE)
 
 \section{Relations - Relational Calculus \& Algebra}
@@ -215,28 +212,30 @@ All of the queries in this section are expressed using Relational Algebra (RA), 
  \end{multline*}
 
   \item\label{part1}\begin{displaymath}
-  \pi \ parent\_company\_id (\sigma status \ = `completed' (acquistion))
+  \pi \ parent\_company\_id (\sigma status \ = `completed' (acquisition))
  \end{displaymath}
- n.b. The SQL equivolent of this query (see \emph {section 3}) uses the DISTINCT operator to remove duplicates, as RA is based on set theory this is not neccassary here.
+ n.b. The SQL equivalent to this query (see \emph {section 3}) uses the DISTINCT operator to remove duplicates; as RA is based on set theory there are no duplicates.
 
   \item\label{part1}\begin{multline*} \pi \ founder\_id (\sigma founder\_id \geq 3 (founder\_id \ \\
   g \ count (founder\_id) (founder\_companies))
  \end{multline*}
- n.b. here the aggregate opperator \emph{g} is used to count over the occurances of each founder\_id in the relational. This aggregate can then be selected over.
+ n.b. Here the aggregate operator \emph{g} is used to count over the occurrences of each founder\_id in the relational. This aggregate can then be selected over.
   \item\label{part1}\begin{multline*}
   \pi \ child\_company\_id (f \bowtie c \ with (f := \\
-  (\pi \ child\_company\_id, announced\_date (\sigma \ status = `failed' (acquistion))) \\
+  (\pi \ child\_company\_id, announced\_date (\sigma \ status = `failed' (acquisition))) \\
   c := (\pi \ child\_company\_id, completion\_date \\
-  (\sigma \ status = `completed' (acquistion)))
+  (\sigma \ status = `completed' (acquisition)))
   ) \\
   \sigma completion\_date > announced\_date)
  \end{multline*}
- In this query we select all companies with a failed acquisition and completed acuisitions and name the resulting relationals \emph{f} \& \emph{c} respectively using the \emph{with} operator. In both relations the \emph{child\_company\_id} and is kept, within \emph{f} the \emph{announced\_date} attribute is kept, and within {c} the \emph{completion\_date} attribute is kept. The rest of the fields are projected away. The relations are then joined using a natural join which utalises the fact that both relations have a \emph{child\_company\_id} attribute.We can then compare the \emph{completion\_date} of \emph{c} to the \emph{announced\_date} of \emph{f} to select only those in which the completed acquistion occurred after the failed attempt.
+ In this query we select all companies with a failed acquisition and completed acquisitions and name the resulting relations \emph{f} \& \emph{c} respectively using the \emph{with} operator. In both relations the \emph{child\_company\_id} is kept. Within \emph{f} the \emph{announced\_date} attribute is kept, and within {c} the \emph{completion\_date} attribute is kept. The rest of the fields are projected away. The relations are then joined using a natural join which utilises the fact that both relations have a \emph{child\_company\_id} attribute.We can then compare the \emph{completion\_date} of \emph{c} to the \emph{announced\_date} of \emph{f} to select only those in which the completed acquisition occurred after the failed attempt.
 
- It is worth noting that this query assumes that the acquistions are announced and resolved (i.e. fail or complete) in contiguous mannor in respect of their annnounced dates. The schema does not record the \emph {failed\_date} for failed acquisitions. Such an addition would make this query more accurate as the completion and failed dates could be directly compared, however this would affect the database design as if the attribute were to be added to the acquisitions relation then addtional functional dependencies would be introduced which would cause third normal form (3NF) violations. For example, \{{anounced\_date, status, parent\_company\_id, child\_company\_id }\} $\Rightarrow$ \{{completion\_date, failed\_date}\} or simply \{{completion\_date $\Leftrightarrow$ failed\_date}\}. Both of these examples are 3NF violations and as both introduce functional dependencies between non-key attributes.
+ It is worth noting that this query assumes that the acquisitions are announced and resolved (i.e. fail or complete) in contiguous manner in respect of their announced dates. The schema does not record the \emph {failed\_date} for failed acquisitions. Such an addition would make this query more accurate as the completion and failed dates could be directly compared (as oppossed to comparing the announced\_date and completion\_date).  This would significantly affect the database design as the additional attribute were to be added to the acquisitions relation then new functional dependencies would be introduced which would cause third normal form (3NF) violations. For example, \{{announced\_date, status, parent\_company\_id, child\_company\_id }\} $\Rightarrow$ \{{completion\_date, failed\_date}\} or simply \{{completion\_date $\Leftrightarrow$ failed\_date}\}. Both of these examples are 3NF violations and as both introduce functional dependencies between non-key attributes.
 
-  \item\label{part1} This query is not expressable in RA or RC due to the lack of a native \emph{limit} function.
-  \item\label{part1} This query is not expressable in RA or RC due to the lack of recurrsion in the query languages.
+To strictly keep the schema in 3NF/BCNF a potential refactor could be to have an aqcuisition\_dates table with just an announced\_date and end\_date. The acquisitions table could then have a FK to this table as well as the status as is currently indicated. Implementing this design was outside of the scope of the project requirements, but it is interesting to note that even adding one field in the aim of better analysis can drastically affect the normalisation of the database.
+
+  \item\label{part1} This query is not expressible in RA or RC due to the lack of a native \emph{limit} function.
+  \item\label{part1} This query is not expressible in RA or RC due to the lack of recursion in the query languages.
   \end{enumerate}
 
 
@@ -252,7 +251,7 @@ WHERE founded > `1999-12-31';\end{verbatim}
 FROM company
 WHERE country_code IN (`UK', `US');\end{verbatim}
   \item\label{part1}\begin{verbatim}SELECT distinct(parent_company_id)
-FROM acquistion
+FROM acquisition
 WHERE status = `completed';\end{verbatim}
   \item\label{part1}\begin{verbatim} SELECT founder_id,
        COUNT (founder_id)
@@ -261,11 +260,11 @@ GROUP BY founder_id HAVING COUNT(founder_id) >= 3;\end{verbatim}
   \item\label{part1}\begin{verbatim}SELECT f.child_company_id
 FROM
   (SELECT *
-   FROM acquistion
+   FROM acquisition
    WHERE status = `failed')f
 JOIN
   (SELECT *
-   FROM acquistion
+   FROM acquisition
    WHERE status = `completed')c
    ON c.child_company_id = f.child_company_id
 WHERE c.completion_date > f.failed_date;\end{verbatim}
@@ -290,7 +289,7 @@ SELECT comp.name
 FROM comp;\end{verbatim}
 \end{enumerate}
 
-Of note here is query \emph{(g)} which implements a recursive query. Here the WITH operator is used to signify a Common Table Expression (CTE) - affectively a temporary table to be used for the duration of the query. The RECURSIVE operator is used to signify that the CTE is to be used recursively, and the UNION operator creates the recursive call by joining a select statement to the CTE (https://www.postgresql.org/docs/9.1/queries-with.html).
+Of note here is query \emph{(g)} which implements a recursive query. Here the \emph{WITH} operator is used to signify a Common Table Expression (CTE) - affectively a temporary table to be used for the duration of the query. The \emph{RECURSIVE} operator is used to signify that the CTE is to be used recursively, and the UNION operator creates the recursive call by joining a SELECT statement to the CTE (https://www.postgresql.org/docs/9.1/queries-with.html).
 
 \section {Data Mining}
 

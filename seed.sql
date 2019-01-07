@@ -65,7 +65,7 @@ VALUES (1,
 
  -- Acquisitions
 
-INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date, completion_date)
+INSERT INTO acquisition (parent_company_id, child_company_id, status, announced_date, completion_date)
 VALUES(1,
        2,
        'completed',
@@ -86,7 +86,7 @@ VALUES(1,
 
  -- Test data for query e
 
-INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date, failed_date)
+INSERT INTO acquisition (parent_company_id, child_company_id, status, announced_date, failed_date)
 VALUES(1,
        5,
        'failed',
@@ -95,27 +95,27 @@ VALUES(1,
 
  -- Fails - no_self_acquisitions
 
-INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date)
+INSERT INTO acquisition (parent_company_id, child_company_id, status, announced_date)
 VALUES(1,
        1,
        'failed',
        '2015-06-08');
 
  -- Fails - check_no_failed_completion_dates
--- >> new row for relation "acquistion" violates check constraint "check_no_failed_completion_dates"
+-- >> new row for relation "acquisition" violates check constraint "check_no_failed_completion_dates"
 -- https://www.postgresql.org/docs/8.3/errcodes-appendix.html (check_violation)
 
-INSERT INTO acquistion (parent_company_id, child_company_id, status, announced_date, completion_date)
+INSERT INTO acquisition (parent_company_id, child_company_id, status, announced_date, completion_date)
 VALUES(1,
        6,
        'failed',
        '2015-06-08',
        '2015-06-09');
 
- --> 23514: new row for relation "acquistion" violates check constraint "check_no_failed_completion_dates"
+ --> 23514: new row for relation "acquisition" violates check constraint "check_no_failed_completion_dates"
  -- Fails - acquisition_date_constraint
 
-INSERT INTO acquistion (parent_company_id, child_company_id, announced_date)
+INSERT INTO acquisition (parent_company_id, child_company_id, announced_date)
 VALUES(2,
        5,
        '2006-12-31');
