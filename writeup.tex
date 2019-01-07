@@ -290,11 +290,10 @@ SELECT comp.name
 FROM comp;\end{verbatim}
 \end{enumerate}
 
-Of note here is query \emph{g} which implements a recursive query. Here the WITH operator is used to signify a Common Table Expression (CTE) - affectively a temporary table to be used for the duration of the query. The RECURSIVE operator is used to signify that the CTE is to be used recursively, and the UNION operator creates the recursive call by joining a select statement to the CTE (https://www.postgresql.org/docs/9.1/queries-with.html).
+Of note here is query \emph{(g)} which implements a recursive query. Here the WITH operator is used to signify a Common Table Expression (CTE) - affectively a temporary table to be used for the duration of the query. The RECURSIVE operator is used to signify that the CTE is to be used recursively, and the UNION operator creates the recursive call by joining a select statement to the CTE (https://www.postgresql.org/docs/9.1/queries-with.html).
 
 \section {Data Mining}
 
-\subsection{Business Understanding}
 The focus of this data mining activity is to predict the following two questions: Q1) Whether an acquisition is likely to succeed or fail Q2) If an acquisition is to succeed, how long will the process take?
 
  \subsection{Data Understanding}
