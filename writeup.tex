@@ -294,9 +294,33 @@ Of note here is query \emph{g} which implements a recursive query. Here the WITH
 
 \section {Data Mining}
 
-In order to successfully perform a data mining project, it is important to ask direct and specific questions to be address, rather than broad or open ended ones.  The focus of this data mining activity be framed as `predict whether an acquisition is likely to succeed or fail, and how long will the process is likely to take'.
+Has the business pivoted its goals? What are its key revenue activities? How does the business aim to use the work the output of this data mining project? What is the project scope and duration? What are the deliverables for the project?
 
-This project shall be conducted using the CRISPDM methodology. The methodolgy looks to build rich data mining projects
+\subsection{Data Understanding}
+The schema defined almost certainly has evolved since it was originally designed. It is important to explore the data that we are looking to analyse. What is the qualitative and volume of the data critical tables (company, founders and acquisitions)? Metrics such as cardinality, sparseness and volume can aid us.
+
+The original schema allowed  NULL attributes which could have an impact on modelling. As the attribute `acquisition.status' is significant for both questions its spareness significant.
+
+For Q2 the target attribute is the delta \emph{d} := (completion\_date - announced\_date).  We need to assess the quality and sparseness of both attributes. In the original schema announced_date had a NOT NULL constraint, however if this constraint has since been lifted both elements of our composite target attribute could be sparse.
+
+We can now judge whether our data is sufficient to model on, or if enrichment with external data be beneficial. Pertinent information omitted from the original schema includes industry sectors and financials. Should we consider finding external data sources from which this can be pulled? This presents new complexity, such as mapping companies to industry sectors (e.g. GICS/NAICS) and ensuring the veracity of the mappings.
+
+\subsection{Data Preparation}
+The subset of completed acquisitions with NULL completed_dates may require attention. If the subset is small (0-5\% of the superset) it may be acceptable to omit these records from the model, otherwise we may consider filling null values. Statistical methods i.e. using the mean delta /emph{d}, and adding this value to the announced\_date of each record could be considered, however is part of a target attribute, manually filling the missing values may be more appropriate. This can be time and resource consuming; it is again question of project scope.
+
+\subsection{Data Modelling}
+In both cases use supervised learning methods. As Q1 is a binary classification problem; a decision tree(DT) is a suitable model. Further data preparation may be required to aid modelling. For example, we could define a `hot' industry sector as one with high growth, or which has seen a large number of acquisitions. Further decision points could be formulated on company age, size and revenue.
+
+Q2 models a continuous numerical variable; a regression model is therefore appropriate. The features modelled by Q1 can be reused, however we can now subset the data for only completed acquisitions.
+
+\subsection{Evaluation}
+Binary classification problems use ROC curves to validate error rate. The models can be fine tuned using information gain and error reduction rate respectively.
+
+We can also evaluate whether the models selected were appropriate in general. Was DT over simplistic and could it be improved with a random forest algorithm? Perhaps CrunchView have decided they are interested in the probability of an acquisition completing (i.e no longer a binary classification), in this instance we would restart the cycle, addressing structural questions of the data (e.g. is it acylic) to define what probablistic models can be applied.
+
+\subsection{Deployment}
+Whether the business are expecting a report or a deployable microservice will greatly effect the post-modelling delivery. If the latter, does the organisation understand the maintenance burden as the schema evolves? If the former, then what is the update frequency of the research? Establishing these factors will inform the deployment strategy.
+
 
 \end{document}
 \documentclass[12pt]{article}
