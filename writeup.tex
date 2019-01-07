@@ -15,14 +15,14 @@
 
 \subsection{Relational schema design}
 This section will discuss some of the noteworthy decisions taken in the design of the relational schema for the given problem domain.
-The full SQL for the relational schema can be seen in \emph{appendix 1.1}. Note: PostgreSQL 9.6 is used for all DML and DDL defined in this document. The online SQL compiler https://rextester.com was used to validate the schema and its constraints.
+The full SQL for the relational schema can be seen in \emph{appendix 1.1}. Note: PostgreSQL 9.6 is used for all DML and DDL defined in this document. The online SQL compiler \emph{https://rextester.com} was used to validate the schema and its constraints.
 
 \subsubsection{Types}
 The schema defines two custom enum types, namely  `ISO3166\_ALPHA2' (based on the ISO3166 standard), and `ACQUISITION\_STATUS'. It is worth noting that `ISO3166\_ALPHA2' is loaded with a subset of the full standard as this is fit for the purpose of our data model.
 
 The ACQUISITION\_STATUS status enum is implement by the \emph{status} column in the \emp{acquisition} table, and the ISO3166\_ALPHA2 enum is implemented directly by the \emph{country} table as well as all tables which contain a foreign key to this (\emph{company}, \emph{founder}).
 
-The use of Enums is advantageous as it provides a means of implicit santisation to the tables that implement these types. For example it means an \emph{acquisition} instance could never be created with an undesirable status (i.e a status outside the domain of strings defined by the enum). The same is true of the ISO3166\_ALPHA2 implementation, through it we can be assured the quality of the country code in the database is accurate. Considering Date's  observation [REF - Date] that a table can be thought of as a predicate for which each row is a true proposition, custom data types enable us to constrain the table to only the domain of the predicate. For example, the ISO3166\_ALPHA2 implemented in this model it would be impossible to enter a country with the values `Norway', `NO' as the `NO' country code does not exist in the custom defined type.
+The use of Enums is advantageous as it provides a means of implicit santisation to the tables that implement these types. For example it means an \emph{acquisition} instance could never be created with an undesirable status (i.e a status outside the domain of strings defined by the enum). The same is true of the ISO3166\_ALPHA2 implementation, through it we can be assured the quality of the country code in the database is accurate. Considering Date's observation [2] that a table can be thought of as a predicate for which each row is a true proposition, custom data types enable us to constrain the table to only the domain of the predicate. For example, the ISO3166\_ALPHA2 implemented in this model it would be impossible to enter a country with the values `Norway', `NO' as the `NO' country code does not exist in the custom defined type.
 
 It should be noted that the tuple (`Norway', `CN') would be a valid entry into the country table (as `CN' does exist in the custom type). We can verify that this record is false as per the ISO3166 standard as CN is the country code for China, however there is nothing wrong with it from the data storage level as defined by this schema. Therefore although implementing the custom type has helped, it has not guarantee the quality of the data. To frame ths in the context of propositional logic as prescribed by Date; it is possible for our schema to record false propositions. Dropping the country table altogether and extending the SO3166\_ALPHA2 type to include a country name and code tuple would therefore be a further improvement that could be made to this model if we wanted to introduce more rigour and reduce the error potential for such inaccuracies.
 
@@ -88,10 +88,12 @@ CREATE TABLE acquisition ( parent_company_id int NOT NULL,
 \end{verbatim}
 
 \subsection{Normalisation}
-A relational schema can be said to be compliant to BCNF if for all of its functional dependencies (x $\Rightarrow$ y) if one of the following statements is true: \\\\
-1) \emph{y} is a subset of x (trivial functional dependency) \\
-2) \emph{x} is a superkey (a subset of a candidate key for the relation). \\
-Given this definition and with the non-trivial functional dependencies highlighted below, we can judge that this schema is compliant to BCNF - this is discussed in depth in the following sections.
+A relational schema can be said to be compliant to BCNF if for all of its functional dependencies (x $\Rightarrow$ y) if one of the following statements is true:
+ \begin{enumerate}
+ \item \emph{y} is a subset of x (trivial functional dependency)
+\item \emph{x} is a superkey (a subset of a candidate key for the relation). [5]
+\end{enumerate}
+Where a candidate key is a valiable key for identifying a row. Given this definition and with the non-trivial functional dependencies highlighted below, we can judge that this schema is compliant to BCNF - this is discussed in depth in the following sections.
 
 \subsubsection{Company}
 
@@ -100,14 +102,14 @@ id $\Rightarrow${\{name, founded, country\_code, parent\_company\_id\}} \\
 
 \\ N.B. At first glance a set of functional dependencies with \{{name,  founded}\} on the left side seems to exist, but this does not hold due to the composite unique constraint on name and country code (see \emph{section 1.2}).  That is to say that multiple companies with the same name can exist in the relation, provided they are in different countries. Hence functional dependencies with the \{{name, countrycode\}} tuple on the left side always hold, but those with \{{name, founded\}} will only hold in some data sets.
 
-The \{{name, founded\}} tuple is candidate key. Had this been implemented as a composite primary key there would have been no requirement for the additional `id' attribute, however as this key is used in multiple tables as a foreign key (including the self referential foreign key`parent\_company\_id' in this table), it is more efficient to use a serial id field than a composite of two string columns. \emph{x} is a candidate key and therefore a superkey, hence this table does conform to BCNF. (https://www.vertabelo.com/blog/technical-articles/boyce-codd-normal-form-bcnf).
+The \{{name, founded\}} tuple is candidate key. Had this been implemented as a composite primary key there would have been no requirement for the additional `id' attribute, however as this key is used in multiple tables as a foreign key (including the self referential foreign key`parent\_company\_id' in this table), it is more efficient to use a serial id field than a composite of two string columns. \emph{x} is a candidate key and therefore a superkey, hence this table does conform to BCNF.
 
 \subsubsection{Founder}
 id $\Rightarrow$ \{{firstname, lastname, dob, country\_of\_origin\}}\\
 
 The only functional dependency present is the base dependency that all columns are functionally dependent on the `id' primary key. Whilst it initially appears that other dependencies may exist such as \\\\
 \{{firstname, lastname\}} $\Rightarrow$ \{{dob, country\_of\_origin\}}\\\\
-these dependencies are only temporal - i.e they hold for some states of the relation (or \emph{relational variable} - (JOSH - ref date), but as there are no unique constraints on any of these attributes, it is possible (if unlikely) to have founders with the same name, date of birth and country of origin in the relation (just as it is in the real world). \emph{x} is a primary key and therefore a superkey, hence this FD is BNCF compliant.
+these dependencies are only temporal - i.e they hold for some states of the relation but not all [1]. As there are no unique constraints on any of these attributes, it is possible (if unlikely) to have founders with the same name, date of birth and country of origin in the relation (just as it is in the real world). \emph{x} is a primary key and therefore a superkey, hence this FD is BNCF compliant.
 
 \subsubsection{Acquisition}
 \{{parent\_company\_id, child\_company\_id\, announced\_date}\} $\Rightarrow${\{status, completion\_date}\} \\
@@ -196,8 +198,7 @@ BEFORE INSERT OR UPDATE ON acquisition
     FOR EACH ROW EXECUTE PROCEDURE acquisition_date_constraint();
    \end{verbatim}
 \end{enumerate}
-Here the custom function \emph{acquisition\_date\_constraint} is defined to return a trigger. The trigger uses SQL a SELECT statement and the NEW keyword to compare the ingress announced date and comparing it to the founded date of the company. An exception is raised if the constraint is violated. The function is set to be called on any insert or update to the acquisition table. \\
-(https://www.postgresql.org/docs/9.1/plpgsql-trigger.html#PLPGSQL-TRIGGER-EXAMPLE)
+Here the custom function \emph{acquisition\_date\_constraint} is defined to return a trigger. The trigger uses SQL a SELECT statement and the NEW keyword to compare the ingress announced date and comparing it to the founded date of the company. An exception is raised if the constraint is violated. The function is set to be called on any insert or update to the acquisition table. [4]
 
 \section{Relations - Relational Calculus \& Algebra}
 All of the queries in this section are expressed using Relational Algebra (RA), except for \emph{query a} is expressed using Relational Calculus (RC).
@@ -289,7 +290,7 @@ SELECT comp.name
 FROM comp;\end{verbatim}
 \end{enumerate}
 
-Of note here is query \emph{(g)} which implements a recursive query. Here the \emph{WITH} operator is used to signify a Common Table Expression (CTE) - affectively a temporary table to be used for the duration of the query. The \emph{RECURSIVE} operator is used to signify that the CTE is to be used recursively, and the UNION operator creates the recursive call by joining a SELECT statement to the CTE (https://www.postgresql.org/docs/9.1/queries-with.html).
+Of note here is query \emph{(g)} which implements a recursive query. Here the \emph{WITH} operator is used to signify a Common Table Expression (CTE) - affectively a temporary table to be used for the duration of the query. The \emph{RECURSIVE} operator is used to signify that the CTE is to be used recursively, and the UNION operator creates the recursive call by joining a SELECT statement to the CTE [3].
 
 \section {Data Mining}
 
@@ -317,7 +318,31 @@ We can also evaluate whether the models selected were appropriate. Could the DT 
 
 \subsection{Deployment}
 Whether the business are expecting a report or a deployable microservice will greatly affect the delivery. If the latter, does the organisation understand the maintenance burden as the schema evolves? If the former, then what is the update frequency of the research? Establishing these factors will inform the deployment strategy.
+\begin{thebibliography}{9}
 
+\bibitem{date}
+Date, C.J
+\textit{An Introduction to Database Systems}.
+(2003). An Introduction to Database Systems. 8th ed. London: Pearson. 334-336
+
+\bibitem{date}
+Date, C.J
+\textit{An Introduction to Database Systems}.
+(2003). An Introduction to Database Systems. 8th ed. London: Pearson. 783-789
+
+\bibitem{triggers}
+PostgreSQL documentation. (2016).
+\textit{Triggers on Data Changes}
+ Available: https://www.postgresql.org/docs/9.6/plpgsql-trigger.html#PLPGSQL-TRIGGER-EXAMPLE. [Accessed 6th Jan 2019.]
+
+\bibitem{withqueries}
+PostgreSQL. (2016). \textit{WITH Queries (Common Table Expressions).} Available: https://www.postgresql.org/docs/9.6/queries-with.html. [Accessed 6th Jan 2019.]
+
+\bibitem{Kozubek}
+Agnieszka Kozubek. (2014). \textit{The Boyce-Codd Normal Form (BCNF).} Available: https://www.vertabelo.com/blog/technical-articles/boyce-codd-normal-form-bcnf. [Accessed 6th Jan 2019.]
+
+
+\end{thebibliography}
 
 \end{document}
 \documentclass[12pt]{article}
