@@ -316,7 +316,7 @@ Q2 models a continuous numerical variable; a regression model is therefore appro
 \subsection{Evaluation}
 Binary classification problems use ROC curves to validate error rate. The models can be fine tuned using information gain and error reduction rate respectively.
 
-We can also evaluate whether the models selected were appropriate in general. Was DT over simplistic and could it be improved with a random forest algorithm? Perhaps CrunchView have decided they are interested in the probability of an acquisition completing (i.e no longer a binary classification), in this instance we would restart the cycle, addressing structural questions of the data (e.g. is it acylic) to define what probablistic models can be applied.
+We can now evaluate whether the models selected were appropriate in general. Was DT over simplistic and could it be improved with a random forest algorithm? Perhaps CrunchView have decided they are interested in the probability of an acquisition completing (i.e no longer a binary classification), in this instance we would restart the cycle, addressing structural questions of the data (e.g. is it acylic) to define what probablistic models can be applied.
 
 \subsection{Deployment}
 Whether the business are expecting a report or a deployable microservice will greatly effect the post-modelling delivery. If the latter, does the organisation understand the maintenance burden as the schema evolves? If the former, then what is the update frequency of the research? Establishing these factors will inform the deployment strategy.
