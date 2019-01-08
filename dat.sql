@@ -34,7 +34,7 @@ CREATE TABLE founder_companies(founder_id serial, company_id serial,
                                FOREIGN KEY (company_id) REFERENCES company (id));
 
 
-CREATE TABLE acquisition (parent_company_id int NOT NULL, child_company_id int NOT NULL, status AQUISITION_STATUS, price_usd NUMERIC DEFAULT NULL, announced_date DATE NOT NULL, completion_date DATE DEFAULT NULL,
+CREATE TABLE acquisition (parent_company_id int NOT NULL, child_company_id int NOT NULL, status AQUISITION_STATUS NOT NULL, price_usd NUMERIC DEFAULT NULL, announced_date DATE NOT NULL, completion_date DATE DEFAULT NULL,
                           FOREIGN KEY (parent_company_id) REFERENCES company (id),
                           FOREIGN KEY (child_company_id) REFERENCES company (id));
 
