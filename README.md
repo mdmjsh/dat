@@ -1,2 +1,2 @@
-# Database Design Module
+# Database Design
 - December 2018
